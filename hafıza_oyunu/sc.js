@@ -1,141 +1,103 @@
-const game = (function() {
-    const wrapper = document.getElementById("game-wrapper");
-    const row = 4;
-    const col = 4;
-    const cellWidth = wrapper.offsetWidth / col;
-    const cellHeight = wrapper.offsetHeight / row;
+var errors = 0; // Hata sayısını saklamak için bir değişken.
+var cardList = [ // Kullanılacak kartların listesi.
+    "darkness", // Karanlık
+    "double", // Çift
+    "fairy", // Peri
+    "fighting", // Dövüş
+    "fire", // Ateş
+    "grass", // Çimen
+    "lightning", // Şimşek
+    "metal", // Metal
+    "psychic", // Psikik
+    "water" // Su
+]
 
-    const symbols = "ABCDEFGHJKLMNOPRS123456789".split("");
-    const cells = [];
-    let previousCellIndex = null; // last clicked cell index
-    let canPlay = false; // flag if game is playable
+var cardSet; // Karıştırılmış kartların saklanacağı set.
+var board = []; // Oyun tahtasını temsil eden bir matris.
+var rows = 4; // Tahtadaki satır sayısı.
+var columns = 5; // Tahtadaki sütun sayısı.
 
-    // create grid
-    const grid = document.createElement("div");
-    grid.classList.add("grid");
-    wrapper.appendChild(grid);
+var card1Selected; // İlk seçilen kart.
+var card2Selected; // İkinci seçilen kart.
 
-    //create info panel
-    const infoPanel = document.createElement("div");
-    infoPanel.classList.add("info-panel");
-    wrapper.appendChild(infoPanel);
+window.onload = function() { // Sayfa yüklendiğinde çalışacak olan fonksiyon.
+    shuffleCards(); // Kartları karıştır.
+    startGame(); // Oyunu başlat.
+}
 
-    // create cells
-    for (let i = 0; i < row*col; i+=2) {
-        const symbol = randomSymbol();
-        
-        for (let j = 0; j < 2; j++) {
-            const currentCellIndex = i + j;
-            const cellElement = document.createElement("div");
-            cellElement.innerText = symbol;
-            cellElement.classList.add("cell");
-            cellElement.style.width = (100 / col) + "%"
-            
-            const cell = {
-                symbol: symbol,
-                element: cellElement,
-                hasMatch: false
-            }
+function shuffleCards() { // Kartları karıştıran fonksiyon.
+    cardSet = cardList.concat(cardList); // Kart listesini kopyalayarak set oluştur.
+    console.log(cardSet); // Karıştırılmadan önce kart setini konsola yazdır.
+    for (let i = 0; i < cardSet.length; i++) { // Kartların dizilimini karıştıran döngü.
+        let j = Math.floor(Math.random() * cardSet.length); // Rastgele bir kartın indisini seç.
+        let temp = cardSet[i]; // Geçici bir değişkene mevcut kartı sakla.
+        cardSet[i] = cardSet[j]; // Mevcut kartın yerine rastgele seçilen kartı koy.
+        cardSet[j] = temp; // Rastgele seçilen kartın yerine mevcut kartı koy.
+    }
+    console.log(cardSet); // Kartların karıştırıldıktan sonraki halini konsola yazdır.
+}
 
-            // give it a couple seconds and turn over
-            setTimeout(() => {
-                cellElement.classList.add("hide");
-            }, randomInt(300, 350));
+function startGame() { // Oyunu başlatan fonksiyon.
+    for (let r = 0; r < rows; r++) { // Satırları oluşturan döngü.
+        let row = []; // Satırı temsil eden bir dizi oluştur.
+        for (let c = 0; c < columns; c++) { // Sütunları oluşturan döngü.
+            let cardImg = cardSet.pop(); // Kart setinden bir kart çıkar ve resmini al.
+            row.push(cardImg); // Kart resmini satır dizisine ekle.
 
-            //switch with a random previous one
-            // no need to loop for shuffling
-            if(currentCellIndex > 2) {
-                const previousRandIndex = randomInt(0, i);
+            let card = document.createElement("img"); // Yeni bir img elementi oluştur.
+            card.id = r.toString() + "-" + c.toString(); // Kartın id'sini belirle.
+            card.src = cardImg + ".jpg"; // Kartın görüntüsünü belirle.
+            card.classList.add("card"); // Kartın CSS sınıfını ayarla.
+            card.addEventListener("click", selectCard); // Kart tıklandığında selectCard fonksiyonunu çağır.
+            document.getElementById("board").append(card); // Kartı tahtaya ekle.
+        }
+        board.push(row); // Oluşturulan satırı tahta matrisine ekle.
+    }
 
-                cells[currentCellIndex] = cells[previousRandIndex];
-                cells[previousRandIndex] = cell;
+    console.log(board); // Tahtayı konsola yazdır.
+    setTimeout(hideCards, 1000); // Kartları gizlemek için bir saniye beklet.
+}
 
-            } else {
-                cells[currentCellIndex] = cell;
-            }
+function hideCards() { // Kartları gizleyen fonksiyon.
+    for (let r = 0; r < rows; r++) { // Satırları döngüye al.
+        for (let c = 0; c < columns; c++) { // Sütunları döngüye al.
+            let card = document.getElementById(r.toString() + "-" + c.toString()); // İlgili kartı seç.
+            card.src = "back.jpg"; // Kartın görüntüsünü arkaya çevir.
         }
     }
+}
 
-    // add all elements to DOM
-    for (let i = 0; i < cells.length; i++) {
-        cells[i].element.addEventListener("click", () => { cellClick(i) });
+function selectCard() { // Kart seçildiğinde çağrılan fonksiyon.
+    if (this.src.includes("back")) { // Kartın arkası görünüyorsa işlem yap.
+        if (!card1Selected) { // Eğer birinci kart seçilmemişse,
+            card1Selected = this; // Seçilen kartı birinci kart olarak ata.
 
-        grid.appendChild(cells[i].element);
-        canPlay = true;
-    }
+            let coords = card1Selected.id.split("-"); // Kartın konumunu al.
+            let r = parseInt(coords[0]); // Satırı al.
+            let c = parseInt(coords[1]); // Sütunu al.
 
-    function randomSymbol(){
-        const symbolIndex = randomInt(0, symbols.length-1);
-        const symbol = symbols[symbolIndex];
+            card1Selected.src = board[r][c] + ".jpg"; // Kartın görüntüsünü belirle.
+        } else if (!card2Selected && this != card1Selected) { // Eğer ikinci kart seçilmemiş ve seçilen kart birinci kart değilse,
+            card2Selected = this; // Seçilen kartı ikinci kart olarak ata.
 
-        // delete symbol from symbols
-        symbols.splice(symbolIndex, 1);
-        return symbol;
-    }
+            let coords = card2Selected.id.split("-"); // Kartın konumunu al.
+            let r = parseInt(coords[0]); // Satırı al.
+            let c = parseInt(coords[1]); // Sütunu al.
 
-    function randomInt(min, max){
-        return Math.round(Math.random() * (max - min)) + min;
-    }
-
-    function cellClick(cellIndex) {
-        const cellElement = cells[cellIndex].element;
-
-        if(canPlay && cellElement.classList.contains("hide")) {
-            canPlay = false;
-            cellElement.classList.remove("hide");
-
-            if(previousCellIndex === null) {
-                // it is first click for a match
-                previousCellIndex = cellIndex;
-                canPlay = true
-            } else {
-                // second click! check if it is a match
-
-                if(cells[previousCellIndex].symbol === cells[cellIndex].symbol) {
-                    // a match
-                    cells[previousCellIndex].hasMatch = true;
-                    cells[cellIndex].hasMatch = true;
-
-                    showInfo("MATCH", 'green');
-
-                    setTimeout(() => {
-                        previousCellIndex = null;
-
-                        const gameOver = checkGameOver();
-                        if(gameOver) {
-                            showInfo("GAME OVER", 'green');
-                        } else {
-                            canPlay = true;
-                        }
-                    }, 500);
-                } else {
-                    // no match
-                    showInfo("NO MATCH!", "red");
-
-                    setTimeout(() => {
-                        // hide both cells
-                        cells[previousCellIndex].element.classList.add("hide");
-                        cellElement.classList.add("hide");
-
-                        previousCellIndex = null;
-                        canPlay = true;
-                    }, 500);
-                }
-            }
+            card2Selected.src = board[r][c] + ".jpg"; // Kartın görüntüsünü belirle.
+            setTimeout(update, 1000); // Bir saniye sonra kontrol et.
         }
     }
+}
 
-    function showInfo(message, type){
-        infoPanel.innerHTML = `<span class="${type}">${message}</span>`;
+function update() { // Seçilen kartları kontrol eden fonksiyon.
+    if (card1Selected.src != card2Selected.src) { // Kartlar eşleşmiyorsa,
+        card1Selected.src = "back.jpg"; // Birinci kartın görüntüsünü arkaya çevir.
+        card2Selected.src = "back.jpg"; // İkinci kartın görüntüsünü arkaya çevir.
+        errors += 1; // Hata sayısını bir artır.
+        document.getElementById("errors").innerText = errors; // Hata sayısını ekranda güncelle.
     }
 
-    function checkGameOver() {
-        let gameIsOver = true;
-
-        for (let i = 0; i < cells.length; i++) {
-            gameIsOver = cells[i].hasMatch === false ? false : gameIsOver;
-        }
-
-        return gameIsOver;
-    }
-})();
+    card1Selected = null; // Birinci kartı sıfırla.
+    card2Selected = null; // İkinci kartı sıfırla.
+}

@@ -1,62 +1,75 @@
-
+// Oyuncunun seçimi için değişken
 var you;
+
+// Oyuncunun puanı
 var yourScore = 0;
+
+// Bilgisayarın seçimi için değişken
 var opponent;
+
+// Bilgisayarın puanı
 var opponentScore = 0;
 
-var choices = ["rock", "paper", "scissors"];
+// Taş, kağıt, makas seçenekleri
+var choices = ["taş", "kağıt", "makas"];
 
+// Sayfa yüklendiğinde oyunu ayarlayan fonksiyon
 window.onload = function() {
+    // Her seçenek için bir resim oluştur
     for (let i = 0; i < 3; i++) {
-        // <img id="rock" src="rock.png">
         let choice = document.createElement("img");
         choice.id = choices[i];
         choice.src = choices[i] + ".png";
         choice.addEventListener("click", selectChoice);
-        document.getElementById("choices").append(choice);
+        document.getElementById("seçenekler").append(choice);
     }
 }
 
+// Oyuncunun seçimini işleyen fonksiyon
 function selectChoice() {
+    // Oyuncunun seçimini al
     you = this.id;
-    document.getElementById("your-choice").src = you + ".png";
+    // Oyuncunun seçimini göstermek için resmi güncelle
+    document.getElementById("sizin-seçiminiz").src = you + ".png";
 
-    //random for oppponent
-    opponent = choices[Math.floor(Math.random() * 3)]; //0- .999999 * 3 = 0-2.99999
-    document.getElementById("opponent-choice").src = opponent + ".png";
+    // Bilgisayarın seçimini rastgele yap
+    opponent = choices[Math.floor(Math.random() * 3)];
+    // Bilgisayarın seçimini göstermek için resmi güncelle
+    document.getElementById("rakibin-seçimi").src = opponent + ".png";
 
-    //check for winner
+    // Kazananı belirle ve puanları güncelle
     if (you == opponent) {
         yourScore += 1;
         opponentScore += 1;
     }
     else {
-        if (you == "rock") {
-            if (opponent == "scissors") {
+        if (you == "taş") {
+            if (opponent == "makas") {
                 yourScore += 1;
             }
-            else if (opponent == "paper") {
+            else if (opponent == "kağıt") {
                 opponentScore += 1;
             }
         }
-        else if (you == "scissors") {
-            if (opponent == "paper") {
+        else if (you == "makas") {
+            if (opponent == "kağıt") {
                 yourScore += 1;
             }
-            else if (opponent == "rock") {
+            else if (opponent == "taş") {
                 opponentScore += 1;
             }
         }
-        else if (you == "paper") {
-            if (opponent == "rock") {
+        else if (you == "kağıt") {
+            if (opponent == "taş") {
                 yourScore += 1;
             }
-            else if (opponent == "scissors") {
+            else if (opponent == "makas") {
                 opponentScore += 1;
             }
         }
     }
 
-    document.getElementById("your-score").innerText = yourScore;
-    document.getElementById("opponent-score").innerText = opponentScore;
+    // Yeni puanları ekrana yazdır
+    document.getElementById("sizin-puanınız").innerText = yourScore;
+    document.getElementById("rakibin-puanı").innerText = opponentScore;
 }
